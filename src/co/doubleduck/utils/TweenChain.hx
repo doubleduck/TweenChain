@@ -1,5 +1,6 @@
 package co.doubleduck.utils;
 
+import motion.actuators.SimpleActuator;
 import haxe.ds.StringMap;
 import motion.easing.IEasing;
 import motion.actuators.GenericActuator;
@@ -19,6 +20,7 @@ class TweenChain
 	private static var allowNew:Bool = false;
 	private static var activeChains:Array<TweenChain> = [];
 	private static var count:Int = 0;
+	public static var autoVisible:Bool = true;
 
 	//====================
 	//// INSTANCE MEMBERS
@@ -31,7 +33,7 @@ class TweenChain
 	private var _debug:Bool;
 	private var _overwrite:Bool;
 	private var _activated:Bool;
-	private var _runningTween:GenericActuator;
+	private var _runningTween:GenericActuator<Dynamic>;
 
 
 	//====================
@@ -68,7 +70,7 @@ class TweenChain
 			{
 				if (i._runningTween != null)
 				{
-					i._runningTween.stop(null, false, false);
+					Actuate.stop(obj, null, false, false); //i._runningTween.stop(null, false, false);
 				}
 				i._chains = [];
 				arr.push(i);
@@ -175,7 +177,7 @@ class TweenChain
 	{
 		if (duration == 0)
 		{
-		return this;
+			return this;
 		}
 
 		var chain = getNewChainHash();
@@ -197,6 +199,10 @@ class TweenChain
 	public function call(handler:Dynamic, params:Array<Dynamic> = null):TweenChain
 	{
 		var chain = getNewChainHash();
+
+		if (params == null) {
+			params = [];
+		}
 
 		chain.set("handler", handler);
 		chain.set("params", params);
@@ -232,7 +238,7 @@ class TweenChain
 					Reflect.callMethod(d.get("handler"), d.get("handler"), d.get("params"));
 				}
 
-			_currIndex++;
+				_currIndex++;
 			}
 			else
 			{
@@ -274,6 +280,15 @@ class TweenChain
 					.onUpdate(currChain.get("onUpdate"), [_obj])
 					.onComplete(doneActuateTween);
 			}
+			_runningTween.autoVisible(autoVisible);
+
+			/*
+			if (currChain.get("props").color != null)
+			{
+				var propsColor:Array<Dynamic> = currChain.get("props").color;
+				Actuate.transform(_obj, currChain.get("duration")*10).color(Std.parseInt(propsColor[0]), propsColor[1]);
+			}
+			*/
 
 		}
 		else if (currChain.get("type") == ChainTypes.APPLY)
